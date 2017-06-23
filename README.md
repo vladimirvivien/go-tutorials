@@ -54,7 +54,7 @@ This means you can create an application from the comfort your Mac running OS X 
 
 ## Setup your workspace
 Before you get introduced to your first Go program, let us take a moment to discuss your environment for local development.  After you install your Go toolchain, it is crucial that you properly setup your workspace.  It is an arbitrary directory which stores your Go source files, organized as packages, and built artifacts (such as object files and executable binaries) as shown in the following sample workspace:
-```bash
+```shell
 $HOME/go
  +- src/
  |  +- github.com/vladimirvivien/getting-started-with-go
