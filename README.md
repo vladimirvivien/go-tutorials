@@ -50,7 +50,7 @@ The Go compiler can target 9 operating systems:
 - Solaris
 - Windows
 
-This means you can create an application from the comfort your Mac running OS X on a x86_64 and compile that application to run on Linux running on an ARM6. 
+This means you can create your program from the comfort your Mac running OS X on a x86_64 and compile that code to run on Linux running on an ARM6.
 
 ## Setup your workspace
 Before you get introduced to your first Go program, let us take a moment to discuss your environment for local development.  After you install your Go toolchain, it is crucial that you properly setup your workspace.  It is an arbitrary directory which stores your Go source files, organized as packages, and built artifacts (such as object files and executable binaries) as shown in the following sample workspace:
@@ -78,5 +78,19 @@ $HOME/go
     +- ... (compiled programs stored here) ...
 ```
 By convention, the Go toolchain assumes the workspace is located at `$HOME/go` (if different, you will need to set env variable `$GOPATH` pointing to the workspace location).
+
+## Editors and IDE
+Because of its minimal syntax, working with Go can be done using your favorite text editor.  Some editors include features such as syntax higlights while others have deep integrations with the Go toolchain to provide an IDE-like experience.  Some of the more well-known editors with Go support include:
+- Atom
+- Emacs
+- Sublime Text
+- TextWrangler
+- Vim/Neovim
+- ... and more
+
+If you feel more comfortable with working with a full IDE, you will be well-served there as well.  There are several IDE's providing full support for Go including the followings:
+- IntelliJ Gogland - Go IDE
+- Visual Studio Code - Support with vscode-go plugin
+- GoClipse - Eclipse based Go IDE
 
 ## Your first Go program
