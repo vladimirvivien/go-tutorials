@@ -120,16 +120,54 @@ func main() {
 	fmt.Println("Hello, World!")
 }
 ```
-Next, we can compile and run the Go with one command as shown in the following example:
+After the source code is saved, we can compile and run it with the `go run` command as shown in the following example:
 ```sh
-cd $HOME/go/src/hello
-go run hello_world.go
+$> go run hello_world.go
 Hello, World!
 ```
-As shown, the `go run` tool first compiles the source code then run the resulting program.  Running your Go programs like that is a great of debugging and testing ideas.  However, as we will see later, using the Go compiler for the full build-cycle is just as easy.
+The `go run` command, shown above, is a convenience tool that compiles of the source code and immediately runs the resulting program.   This command can be handy when prototyping ideas or running a simple Go program.  As we will see later, there are other, more suitable, ways to compile your Go code for distribution.
+
+## The Go source file
+It is important to understand the make up of a Go source file.  The following figure highlights the major attributes of a Go source file.
+
+![Go Source](go-source.png)
+
+#### `package`
+All Go source files must start with the he `package` directive.  It declares the name of a package to which the source in the file belongs.  In the source snippet above, the source belongs to package `main` which is a reserved name for packages that get compiled to runnable binaries.  
+
+#### `import`
+The `import` statement specifies an  `import path` for packages that are used in the source code.  Your code can import from the standard library or other user-provided packages that are in the workspace.  The code above imports package `fmt` so that it can invoke function `fmt.Println`.
+
+#### `func main()`
+Go functions are declared using the `func` keyword.  Function `main` is a special function that is used as the entry point of an executable program.  Function `main` must be defined in the main package.
+
+#### File `hello_world.go`
+Go source files can have arbitrary names followed by the `.go` extension.  There is no relations between the code elements in the source file and its name.  However, by convention, the file is usually named something meaningful that is usually kept short and use the underscore (`_`) as word separator.
+
+#### // Comment
+Go uses C-style comments which are used by Go tools to generate documentation automatically.
+
+#### Optional semi-colon
+One more thing that is notable in Go sources is the lack of semi-colon.  While the compiler understands and can parse source code with semi-column, they are almost always omitted in idiomatic Go.
+
+## Packages
+
+### Building your code
+When you want to build your Go project for distribution,  you will use command `go build` which compiles your Go source files into a binary.
+```
+> go build hello_world.go
+```
+The previous command will compile the specified source 
+
+Command `go install` which compiles and installs (in `$GOPATH/bin`) your Go programs.  For instance the following command will compile and install 
+
+```
+go install hello_world.go
+```
+However, for program releases, you would use the Go compiler to properly compile your binaries for distribution.
 ### The Go program source
  While the program 
 
-## Go Packages
+ ## Go Packages
 
-## The Go tools
+##The tools
