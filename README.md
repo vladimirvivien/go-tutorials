@@ -85,7 +85,7 @@ $HOME/go
     +- ... (compiled programs stored here) ...
 ```
 ### Setting GOPATH
-By convention, the Go toolchain assumes the workspace is located at `$HOME/go`. If different, you will need to set env variable `$GOPATH` pointing to the workspace location.  You can use the `go env` command to verify the location of your `GOPATH` as shown below.
+By convention (and for the remainder of this discussion), the Go toolchain assumes the workspace is located at `$HOME/go`. If different, you will need to set env variable `$GOPATH` pointing to the workspace location.  You can use the `go env` command to verify the location of your `GOPATH` as shown below.
 ```sh
 go env GOPATH
 /Users/vvivien/DEV/go
@@ -125,7 +125,7 @@ After the source code is saved, we can compile and run it with the `go run` comm
 $> go run hello_world.go
 Hello, World!
 ```
-The `go run` command, shown above, is a convenience tool that compiles of the source code and immediately runs the resulting program.   This command can be handy when prototyping ideas or running a simple Go program.  As we will see later, there are other, more suitable, ways to compile your Go code for distribution.
+The `go run` command, shown above, is a convenience tool that compiles of the source code and immediately runs the resulting program.   This command can be handy when prototyping ideas or running a simple Go program.  As we will see later though, there are other and more suitable ways to compile your Go code and packages for distribution.
 
 ## The Go source file
 It is important to understand the make up of a Go source file.  The following figure highlights the major attributes of a Go source file.
@@ -144,30 +144,119 @@ Go functions are declared using the `func` keyword.  Function `main` is a specia
 #### File `hello_world.go`
 Go source files can have arbitrary names followed by the `.go` extension.  There is no relations between the code elements in the source file and its name.  However, by convention, the file is usually named something meaningful that is usually kept short and use the underscore (`_`) as word separator.
 
-#### // Comment
+#### `// Comment`
 Go uses C-style comments which are used by Go tools to generate documentation automatically.
 
 #### Optional semi-colon
-One more thing that is notable in Go sources is the lack of semi-colon.  While the compiler understands and can parse source code with semi-column, they are almost always omitted in idiomatic Go.
+One more thing that is notable in Go sources is the lack of semi-colon.  In idiomatic Go, semi-colons are optional and are always omitted.  However, the Go compiler inserts them during compilation as they are required by Go's formal grammar.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 
 ## Packages
+All Go source files must belong to a package which is simply a directory where the files are saved in the workspace under `$HOME/go/src`.  It should be made clear that all files in a directory must declare the same package or the compiler will not be happy.  
 
-### Building your code
-When you want to build your Go project for distribution,  you will use command `go build` which compiles your Go source files into a binary.
+
+
+There are two types of Go packages: `programs` which compile to executables and `libraries` that are reusable assets in the workspace.
+
+### A program package
+As mentioned earlier, a program is a package where all source files declare `package main` and at most one file include the special function `main()`.  For instance, the following shows the layout for a program in directory  `greetings/`  as its package.  
+```sh 
+$HOME/go
+ +-src/
+   +-greetings/
+     +-greet.go
+``` 
+
+Source file `greet.go` is shown below declare `package main` and includes declaration `func main()`.  This implies that package `greetings` will be compiled as an executable program which, when compiled, prints `"Hello World"` in a language specified at the command-line.  
+> If you don't understand this code, that is OK, we will cover more as we go.
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+var greetings = map[string]string{
+	"English": "Hello, World!",
+	"French":  "Salut Monde",
+	"Chinese": "世界您好",
+	"Klingon": "qo' vIvan",
+	"Hindi":   "हैलो वर्ल्ड",
+	"Korean":  "안녕하세요",
+	"Russian": "привет мир",
+	"Swahili": "Wapendwa Dunia",
+	"Spanish": "Hola Mundo",
+	"Turkish": "Merhaba Dünya",
+}
+
+func main() {
+	lang := "English"
+	if len(os.Args) >= 2 {
+		lang = os.Args[1]
+	}
+	if greeting, ok := greetings[lang]; ok {
+		fmt.Println(greeting)
+	} else {
+		fmt.Println(greetings["English"])
+	}
+}
 ```
-> go build hello_world.go
+### Compile the package
+The Go compiler builds `packages` and uses the command `go build <package dir | import path>`.   One way to easily build a package is to `cd` into it and run the `go build .` command as shown below:
+
+```sh
+> cd greetings
+> go build .
 ```
-The previous command will compile the specified source 
+In the previous command, the `.` specifies the current directory as the package.  By default, the `go build` command creates a binary with the same name as the package directory.
 
-Command `go install` which compiles and installs (in `$GOPATH/bin`) your Go programs.  For instance the following command will compile and install 
-
+```sh
+> ls -l
+total 1520
+-rw-rw-r-- 1 vladimir vladimir     582 Jul  8 08:30 greet.go
+-rwxrwxr-x 1 vladimir vladimir 1551885 Jul  8 09:05 greetings
 ```
-go install hello_world.go
+We can run the greetings program as follows:
+
+```sh
+> ./greetings Korean
+안녕하세요
 ```
-However, for program releases, you would use the Go compiler to properly compile your binaries for distribution.
-### The Go program source
- While the program 
+The name of the binary output can be controlled with the `-o` flag.  The following will build the program and output an executable binary file named `worldgreet`:
 
- ## Go Packages
+```sh
+> go build -o worldgreet .
+```
+We can also provide a relative directory for the package name when building it:
 
-##The tools
+```sh
+> go build -o worldgreet ./greetings
+```
+### Package installation
+Your package, along with its dependencies, can also be compiled and *installed* in your workspace.  If the package is program, the resulting binaries are copied to path `$HOME/go/bin`.  For instance, the following installs program `worldgreet`:
+
+```sh
+> go install -o worldgreet ./greetings
+```
+It is recommended practice to add `$HOME/go/bin` to your local system $PATH to make your compiled binary available.
+
+### The import path
+One crucial concept to understand in Go is the `import path`.  It is the relative path of each package in the workspace path `$HOME/go/src` which constitutes an identifier that uniquely identify a package.	To drive the concept home, the following shows workspace paths and their and their *import path* values:
+
+| Workspace Path | Import Path |
+|---|---|
+|`$HOME/go/src/foo`|`foo`|
+|`$HOME/go/src/foo/bar`|`foo/bar`|
+|`$HOME/go/src/foo/bar/bazz`|`foo/bar/bazz`|
+
+In the previous example, for instance, the import path forth for workspace directory `$HOME/go/srg/greetings` is, as you would guess,  `greetings`.
+
+A common, and accepted, practice in Go is to include the path of a source code repository and the user name of the repository as part of the path.  The following shows this with an example of an import path that uses GitHub repository path `github.com/vladimirvivien/automi`:
+```
+$HOME/go/src
+ +-github.com/vladimirvivien/automi
+```
+> This is a completely arbitrary practice.  The import path for your Go code does not have to be stored in a source code repository (local or remote) for the code to compile properly.
+
+### A library package
+Libraries, on the other hand, by convention uses the name of the directory as their package name.  For instance, in the example earlier, package `hello` compiles to a program because file `hello_world.go` starts with package declaration `package main`.
