@@ -64,9 +64,9 @@ Before you get introduced to your first Go program, let us take a moment to disc
 ```sh
 $HOME/go
  +- src/
- |  +- github.com/vladimirvivien/getting-started-with-go
- |  |  +- ex01/hello.go 
- |  |  +- ex02/mettaloids.go
+ |  +- github.com/vladimirvivien/go-tutorial
+ |  |  +- hello/hello_world.go 
+ |  |  +- greetings2/greet.go
  |  +- github.com/vladimirvivien/automi
  |  |  +- operators/batch/funcs.go
  |  |  +- stream/stream.go
@@ -74,8 +74,7 @@ $HOME/go
  |
  +- pkg/
  |  +- darwin_amd64
- |     +- github.com/vladimirvivien/getting-started-with-go/ex01.a
- |     +- github.com/vladimirvivien/getting-started-with-go/ex02.a
+ |     +- github.com/vladimirvivien/go-tutorial/greetings2.a
  |     +- github.com/vladimirvivien/automi/operators/batch.a
  |     +- github.com/vladimirvivien/automi/stream.a
  |     +- ... (each package compiled as an object file) ...
@@ -151,7 +150,7 @@ Go uses C-style comments which are used by Go tools to generate documentation au
 One more thing that is notable in Go sources is the lack of semi-colon.  In idiomatic Go, semi-colons are optional and are always omitted.  However, the Go compiler inserts them during compilation as they are required by Go's formal grammar.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 
 ## Packages
-A package is a unit of Go code that can be compiled as an executable `program` or a reusable code `library`.  Packages are directories in the workspace under `$HOME/go/src`.  All files in a package directory must declare the same package name or the compiler will not be happy.  
+In Go, a package is the unit of code that can be compiled either as an executable `program` or a reusable code `library`.  Packages are directories in the workspace under `$HOME/go/src`.  A package can consist of one or more source files which are compiled into one logical unit.  The membership of a source to a package is declared in the with the `package` directive (discussed later).  All files in a package must declare the same package name or the compiler will not be happy.  
 
 ### Package import path and the default name
 The `import path` of a package is the unique directory path of the package in the workspace, relative to path `$HOME/go/src` as shown in the following table:
@@ -181,11 +180,11 @@ func main() {
 ...
 ```
 ### Naming your packages
-A good practice in Go is to give the package path a unique name to avoid name collisions.  This is specially important if you plan to distribute your code for others to consume.  The most common approach is to include a unique identifier such as a source code repository and username as part of the path.  Others also use a company name or a project name, when naming the package directory.  
+An accepted practice in Go is to give the package path a unique name to avoid name collisions.  This is specially important if you plan to distribute your code for others to consume.  The most common approach is to include a unique identifier such as a source code repository and username as part of the path.  Others also use a company name or a project name, when naming the package directory.  
 
 |Import path|Qualifier|
 |---|---|
-|github.com/vladimirvivien/getting-started-with-go|github.com/vladimirvivien|
+|github.com/vladimirvivien/go-tutorial|github.com/vladimirvivien|
 |github.com/stretchr/testify|github.com/stretchr|
 |k8s.io/client-go/pkg/api/v1|k8s.io/client-go|
 |gopkg.in/yaml.v1/|gopkg.in|
@@ -195,8 +194,8 @@ As mentioned earlier,  a program is a package that can be compiled into executab
 
 For instance, the following shows the layout for a program in directory  `greetings/` :  
 ```sh 
-$HOME/go
- +-src/
+$HOME/go/src/
+ +-github.com/vladimirvivien/go-tutorial/
    +-greetings/
      +-greet.go
 ``` 
@@ -238,16 +237,21 @@ func main() {
 #### Compiling and running the program
 We can compile the program package, along with its dependencies, using the `go build` command-line tool by specifying the relative path of the package or its *import path*.  For instance, the following will compile the program in package `greetings`:
 ```sh
-> cd $HOME/go/src/greetings
-> go build .
+$ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/greetings
+$ go build .
 ```
-In the previous command, the `.` specifies the relative path of the package to compile.  By default, the `go build` command creates a binary with the same name as the package.
+Or,
+```sh
+$ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial
+$ go build ./greetings
+```
+In the previous commands are equivalent. They `.` specify the relative directory path of package `greetings` to compile.  By default, the `go build` command creates a binary with the same name as the package.
 
 ```sh
 > ls -l
 total 1520
--rw-rw-r-- 1 vladimir vladimir     582 Jul  8 08:30 greet.go
--rwxrwxr-x 1 vladimir vladimir 1551885 Jul  8 09:05 greetings
+-rw-rw-r-- 1 vvivien vvivien     582 Jul  8 08:30 greet.go
+-rwxrwxr-x 1 vvivien vvivien 1551885 Jul  8 09:05 greetings
 ```
 We can run the greetings program as follows:
 
@@ -255,20 +259,20 @@ We can run the greetings program as follows:
 > ./greetings Korean
 안녕하세요
 ```
-We can also compile the program by specifying its import path.  Note that we use the `-o` to specify the name of the generate binary.  The following will build the program and output an executable binary file named `worldgreet`:
+>Note that we can use the `-o` flag to specify the name of the binary compiled. 
+
+We can also compile the program by specifying its full import path:
 
 ```sh
-> go build -o worldgreet greetings
+$ go build github.com/vladimirvivien/go-tutorial/greetings
 ```
-In the previous command, the `go` tool will look for a package in the workspace called `greetings`.
-
+We can also use `go install` which is a tool that compiles the package and its dependencies and installs the resulting binary in `$HOME/go/bin`.  This command also caches any dependent packages in the workspace to avoid future unnecessary compilation.
+ 
 ### A Go library
-Libraries are packages that logically assemble code elements from are physically grouped files from a directory.  Libraries use the same `go` command tools and are compiled into archive files (instead of executable code) that can be reused by other packages.  Just like programs, all library source files must declare a package to which they belong.  However, source code in a library package *cannot* declare  `package main` and *cannot* include package function `main()`.
-
-To demonstrate a library, we will rewrite the previous greeting program.  In this version, we will extract the greeting functionality and place it into library `greetlib` so that it can be imported by other packages:  
+Libraries are packages that use the same `go` command tools and are compiled into archive files (instead of executable code) that can be reused by other packages.  To demonstrate a library, we will rewrite the previous greeting program.  In this version, we will extract the greeting functionality and place it into library `greetlib` so that it can be imported by other packages:  
 ```sh 
-$HOME/go
- +-src/
+$HOME/go/src/
+ +-github.com/vladimirvivien/go-tutorial
    +-greetlib
      +-lib.go
    +-greetings2/
@@ -299,9 +303,9 @@ func GreetIn(lang string) string {
 	return greetings["English"]
 }
 ```
-As a convention, the source files of a package declare a package name that matches the directory where they are located.  The previous source snippet, for instance, declares `package greetlib` since the directory where the file is located is called `greetlib`.
+As a convention, and to make things easy, the source files of a package declare a package name that matches the directory where they are located.  The previous source snippet, for instance, declares `package greetlib` since the directory where the file is located is called `greetlib`.
 
-The program which uses the library is in package `greetings2`.  The source code in that package imports the library above to access its exported code elements.
+The program which uses the library is in package `greetings2`.  The source code in that package imports the library by specifying its import path as `github.com/vladimirvivien/go-tutorial/greetlib` to access its exported code elements.
 ```go
 package main
 
@@ -309,7 +313,7 @@ import (
 	"fmt"
 	"os"
 	
-	"github.com/vladimirvivien/getting-started-with-go/greetlib"
+	"github.com/vladimirvivien/go-tutorial/greetlib"
 )
 
 func main() {
@@ -320,16 +324,26 @@ func main() {
 	fmt.Println(greetlib.GreetIn(lang))
 }
 ```
-
-### Installing a package
-Your program package, along with its dependencies, can also be compiled and *installed* in your workspace. The resulting binaries are copied to path `$HOME/go/bin`.  For instance, the following installs program `worldgreet`:
-
+#### Compiling a library
+Compiling a library is done using the `go build` tool by specifying the package's import path or its relative directory path as was done before.  For instance, the following would compile the `greetlib` package:
 ```sh
-> go install -o worldgreet ./greetings
+$ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/greetlib
+$ go build . 
 ```
-It is recommended practice to add `$HOME/go/bin` to your local system `$PATH` to make your compiled binary available.
+Or we can ensure that the compiled artifacts is cached in the workspace and is available for other packages by using the `go install` command:
+```sh
+$ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/
+$ go install ./greetlib
+```
+It should be noted that when we compile the program, the `go` tool will properly resolve the dependency to the `greetlib` library and compile that as well.  So, the following will compile and install both the program and its dependent library together:
+```
+$ cd HOME/go/src/github.com/vladimirvivien/go-tutorial/
+$ go install ./greetings2
+```
 
-### Package access
-Once a package is imported in a Go source file, you use a dot notation to access exported package elements.
+### Package element visibility
+Go has a simple rule for package element visibility:
 
-#### Element visibility in packages
+>*Capitalized identifiers are accessible by external packages*
+
+So
