@@ -153,7 +153,7 @@ One more thing that is notable in Go sources is the lack of semi-colon.  In idio
 ## Packages
 A package is a unit of Go code that can be compiled as an executable `program` or a reusable code `library`.  Packages are directories in the workspace under `$HOME/go/src`.  All files in a package directory must declare the same package name or the compiler will not be happy.  
 
-### Package import path and name
+### Package import path and the default name
 The `import path` of a package is the unique directory path of the package in the workspace, relative to path `$HOME/go/src` as shown in the following table:
 
 | Workspace Path | Import Path | Default Name
@@ -162,7 +162,7 @@ The `import path` of a package is the unique directory path of the package in th
 |`$HOME/go/src/foo/bar`|`foo/bar`|`bar`|
 |`$HOME/go/src/foo/bar/bazz`|`foo/bar/bazz`|`bazz`|
 
-One place the import path is used is in Go source files when specifying packages to `import`.  The default package name is resolved as the last element of the import path as shown in the following example source which imports package  `foo/bar/bazz` :
+The previous table shows examples of workspace paths, their resolved import paths, and their default package name.  These concepts are crucial to Go and its tools.  The import path is used in Go source files when specifying packages to `import` for instance.  The default package name is resolved as the last element of the import path and is used in source files as an identifier for the package.  For instance, the following example uses import path  `foo/bar/bazz` which is assigned package identifier `bazz` to access package elements using  a dot-notation:
 ```go
 package main
 import "foo/bar/bazz"
@@ -171,7 +171,24 @@ func main() {
 }
 ...
 ```
-Once a package is imported, it's name is used with a dot notation to access its elements as done in the previous example with `bazz.Blat()` .
+It should be noted that the default package name in a source file can be explicitly specified by preceding the import path with an identifier as shown below:
+```go
+package main
+import ba "foo/bar/bazz"
+func main() {
+    ba.Blat()
+}
+...
+```
+### Naming your packages
+A good practice in Go is to give the package path a unique name to avoid name collisions.  This is specially important if you plan to distribute your code for others to consume.  The most common approach is to include a unique identifier such as a source code repository and username as part of the path.  Others also use a company name or a project name, when naming the package directory.  
+
+|Import path|Qualifier|
+|---|---|
+|github.com/vladimirvivien/getting-started-with-go|github.com/vladimirvivien|
+|github.com/stretchr/testify|github.com/stretchr|
+|k8s.io/client-go/pkg/api/v1|k8s.io/client-go|
+|gopkg.in/yaml.v1/|gopkg.in|
 
 ### A Go program
 As mentioned earlier,  a program is a package that can be compiled into executable code.  All source files of a program must declare `package main` and at most one source file in the directory must include the special function `main()`.  
@@ -218,13 +235,13 @@ func main() {
 	}
 }
 ```
-#### Compiling the program
-We can compile the program, along with its dependencies, using the `go build` command-line tool by specifying the relative path of the package or its import path.  For instance, the following will compile the program:
+#### Compiling and running the program
+We can compile the program package, along with its dependencies, using the `go build` command-line tool by specifying the relative path of the package or its *import path*.  For instance, the following will compile the program in package `greetings`:
 ```sh
 > cd $HOME/go/src/greetings
 > go build .
 ```
-In the previous command, the `.` specifies the relative directory path of the package to compile.  By default, the `go build` command creates a binary with the same name as the package.
+In the previous command, the `.` specifies the relative path of the package to compile.  By default, the `go build` command creates a binary with the same name as the package.
 
 ```sh
 > ls -l
@@ -238,34 +255,79 @@ We can run the greetings program as follows:
 > ./greetings Korean
 안녕하세요
 ```
-The name of the binary output can be controlled with the `-o` flag.  Using this, we can compile the program using its import path directly.  The following will build the program and output an executable binary file named `worldgreet`:
+We can also compile the program by specifying its import path.  Note that we use the `-o` to specify the name of the generate binary.  The following will build the program and output an executable binary file named `worldgreet`:
 
 ```sh
 > go build -o worldgreet greetings
 ```
-In the previous command, the import path is used.  The `go` tool will look for a package in the workspace called `greetings`.
+In the previous command, the `go` tool will look for a package in the workspace called `greetings`.
 
-#### Installing the program
+### A Go library
+Libraries are packages that logically assemble code elements from are physically grouped files from a directory.  Libraries use the same `go` command tools and are compiled into archive files (instead of executable code) that can be reused by other packages.  Just like programs, all library source files must declare a package to which they belong.  However, source code in a library package *cannot* declare  `package main` and *cannot* include package function `main()`.
+
+To demonstrate a library, we will rewrite the previous greeting program.  In this version, we will extract the greeting functionality and place it into library `greetlib` so that it can be imported by other packages:  
+```sh 
+$HOME/go
+ +-src/
+   +-greetlib
+     +-lib.go
+   +-greetings2/
+     +-greet.go
+```
+The source code for the library package is stored in source file `greetlib/lib.go` as shown below:
+```
+package greetlib
+
+var greetings = map[string]string{
+	"English": "Hello, World!",
+	"French":  "Salut Monde",
+	"Chinese": "世界您好",
+	"Klingon": "qo' vIvan",
+	"Hindi":   "हैलो वर्ल्ड",
+	"Korean":  "안녕하세요",
+	"Russian": "привет мир",
+	"Swahili": "Wapendwa Dunia",
+	"Spanish": "Hola Mundo",
+	"Turkish": "Merhaba Dünya",
+}
+
+// GreetIn returns a greeting in specified lang
+func GreetIn(lang string) string {
+	if greeting, ok := greetings[lang]; ok {
+		return greeting
+	}
+	return greetings["English"]
+}
+```
+As a convention, the source files of a package declare a package name that matches the directory where they are located.  The previous source snippet, for instance, declares `package greetlib` since the directory where the file is located is called `greetlib`.
+
+The program which uses the library is in package `greetings2`.  The source code in that package imports the library above to access its exported code elements.
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	
+	"github.com/vladimirvivien/getting-started-with-go/greetlib"
+)
+
+func main() {
+	lang := "English"
+	if len(os.Args) >= 2 {
+		lang = os.Args[1]
+	}
+	fmt.Println(greetlib.GreetIn(lang))
+}
+```
+
+### Installing a package
 Your program package, along with its dependencies, can also be compiled and *installed* in your workspace. The resulting binaries are copied to path `$HOME/go/bin`.  For instance, the following installs program `worldgreet`:
 
 ```sh
 > go install -o worldgreet ./greetings
 ```
 It is recommended practice to add `$HOME/go/bin` to your local system `$PATH` to make your compiled binary available.
-
-### A Go library
-Libraries are packages that group code elements for reuse by other packages.  Libraries use the same Go tools and for compilation and installation.  However, source code in a library must declare a package name other than  `package main` and cannot include package function `main()`.
-
-To demonstrate a library, we will rewrite the previous greeting program.  Instead of one source, we will extract its greeting function and place it into a library that can be imported by other packages.
-
-### Naming your packages
-A good practice in Go is to give the package path a unique name to avoid name collisions.  This is specially important if you plan to distribute your code for others to consume.  The most common approach is to include a unique identifier such as a source code repository and username as part of the path.  Others also use a company name or a project name, when naming the package directory.  
-|Import path|Qualifier|
-|---|---|
-|github.com/vladimirvivien/getting-started-with-go|github.com/vladimirvivien|
-|github.com/stretchr/testify|github.com/stretchr|
-|k8s.io/client-go/pkg/api/v1|k8s.io/client-go|
-|gopkg.in/yaml.v1/|gopkg.in|
 
 ### Package access
 Once a package is imported in a Go source file, you use a dot notation to access exported package elements.
