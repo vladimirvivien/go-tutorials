@@ -267,6 +267,8 @@ We can also compile the program by specifying its full import path:
 $ go build github.com/vladimirvivien/go-tutorial/greetings
 ```
 We can also use `go install` which is a tool that compiles the package and its dependencies and installs the resulting binary in `$HOME/go/bin`.  This command also caches any dependent packages in the workspace to avoid future unnecessary compilation.
+
+> See `go help build` and `go help install` for detail.
  
 ### A Go library
 Libraries are packages that use the same `go` command tools and are compiled into archive files (instead of executable code) that can be reused by other packages.  To demonstrate a library, we will rewrite the previous greeting program.  In this version, we will extract the greeting functionality and place it into library `greetlib` so that it can be imported by other packages:  
@@ -341,9 +343,35 @@ $ cd HOME/go/src/github.com/vladimirvivien/go-tutorial/
 $ go install ./greetings2
 ```
 
+> See `go help build` and `go help install` for detail.
+
 ### Package element visibility
-Go has a simple rule for package element visibility:
+Go has a simple rule for element visibility when a package is imported from another:
 
->*Capitalized identifiers are accessible by external packages*
+>*Capitalized identifiers are visible to other packages*
 
-So
+For instance, we can see this in action from the `greetlib` package example above. Variable `greetings` is an identifier with lowercase, therefore it cannot be accessed from other packages.
+```
+var greetings = map[string]string{
+	"English": "Hello, World!",
+	"French":  "Salut Monde",
+	"Chinese": "世界您好",
+	...
+```
+On the other hand, function `GreetIn()` , shown below is capitalized which means it can be accessed by other packages.
+```
+func GreetIn(lang string) string {
+	if greeting, ok := greetings[lang]; ok {
+		return greeting
+	}
+	return greetings["English"]
+}
+```
+### Remote packages
+Go includes the `go get` tool which can retrieve and install packages stored on a remote source control repository server such as Git or Mercurial.  The tool uses the import path to figure out where the file is located on the server.  For instance, the following command will pull and install package `greetings2` from this repository:
+```
+$ go get github.com/vladimirvivien/go-tutorial/greetings2
+```
+Since package `greetings2` imports package `github.com/vladimirvivien/go-tutorial/greetlib`,  `go get` will transitively attempt to resolve, download, and install package `greetlib` if it is not found in the workspace.
+
+> see `go help get` for more detail.
