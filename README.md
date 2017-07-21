@@ -308,6 +308,7 @@ func GreetIn(lang string) string {
 As a convention, and to make things easy, the source files of a package declare a package name that matches the directory where they are located.  The previous source snippet, for instance, declares `package greetlib` since the directory where the file is located is called `greetlib`.
 
 The program which uses the library is in package `greetings2`.  The source code in that package imports the library by specifying its import path as `github.com/vladimirvivien/go-tutorial/greetlib` to access its exported code elements.
+
 ```go
 package main
 
@@ -328,6 +329,7 @@ func main() {
 ```
 #### Compiling a library
 Compiling a library is done using the `go build` tool by specifying the package's import path or its relative directory path as was done before.  For instance, the following would compile the `greetlib` package:
+
 ```sh
 $ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/greetlib
 $ go build . 
@@ -338,7 +340,7 @@ $ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/
 $ go install ./greetlib
 ```
 It should be noted that when we compile the program, the `go` tool will properly resolve the dependency to the `greetlib` library and compile that as well.  So, the following will compile and install both the program and its dependent library together:
-```
+```sh
 $ cd HOME/go/src/github.com/vladimirvivien/go-tutorial/
 $ go install ./greetings2
 ```
@@ -351,15 +353,18 @@ Go has a simple rule for element visibility when a package is imported from anot
 >*Capitalized identifiers are visible to other packages*
 
 For instance, we can see this in action from the `greetlib` package example above. Variable `greetings` is an identifier with lowercase, therefore it cannot be accessed from other packages.
-```
+
+```go
 var greetings = map[string]string{
 	"English": "Hello, World!",
 	"French":  "Salut Monde",
 	"Chinese": "世界您好",
 	...
+}
 ```
 On the other hand, function `GreetIn()` , shown below is capitalized which means it can be accessed by other packages.
-```
+
+```go
 func GreetIn(lang string) string {
 	if greeting, ok := greetings[lang]; ok {
 		return greeting
@@ -375,3 +380,80 @@ $ go get github.com/vladimirvivien/go-tutorial/greetings2
 Since package `greetings2` imports package `github.com/vladimirvivien/go-tutorial/greetlib`,  `go get` will transitively attempt to resolve, download, and install package `greetlib` if it is not found in the workspace.
 
 > see `go help get` for more detail.
+
+## Language Fundamentals
+This section covers the fundamentals of the Go language including data types, variable declaration, and other language construct that are crucial in understanding the language.
+
+### Variables
+Go is a *strongly typed* language where all variables must have a value and a type.  The following shows several variables being declared with their explicit types:
+```go
+package main
+
+import "fmt"
+
+var name, desc string
+var radius int32
+var mass float64
+var active bool
+var satellites []string
+
+func main() {
+	name = "Sun"
+	desc = "Star"
+	radius = 685800
+	mass = 1.989E+30
+	active = true
+	satellites = []string{
+		"Mercury",
+		"Venus",
+		"Earth",
+		"Mars",
+		"Jupiter",
+		"Saturn",
+		"Uranus",
+		"Neptune",
+	}
+	fmt.Println(name)
+	fmt.Println(desc)
+	fmt.Println("Radius (km)", radius)
+	fmt.Println("Mass (kg)", mass)
+	fmt.Println("Satellites", satellites)
+}
+```
+The previous program shows the *long way*	of declaring and then subsequently assigning values to the variables.  The language also offers an expressive syntax, that can feel like dynamic language,  where the type can be inferred and the value can be assigned in one statement as shown below.
+
+```go
+var name = "Mars"
+var desc = "Planet"
+var radius = 3396.2
+var mass = 6.4185e23
+var active = true
+```
+When variables are declared inside a function, the declaration can get even shorter by dropping the `var` keyword as shown in the following example.  This is one of the most idiomatic version of type declaration that will encounter.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	name := "Neptune"
+	desc := "Planet"
+	radius := 24764
+	mass := 1.024e26
+	active := true
+	satellites := []string{
+		"Naiad", "Thalassa", "Despina", "Galatea"
+		"Triton", "Nereid", "Halimede", "Sao",
+	}
+...
+}
+```
+### Primitive types
+### Composite types
+### String data type
+### Pointers
+### Interfaces
+### Other data types
+### Zero Values
+### Type declaration
