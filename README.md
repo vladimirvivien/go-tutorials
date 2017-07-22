@@ -340,7 +340,7 @@ $ cd $HOME/go/src/github.com/vladimirvivien/go-tutorial/
 $ go install ./greetlib
 ```
 It should be noted that when we compile the program, the `go` tool will properly resolve the dependency to the `greetlib` library and compile that as well.  So, the following will compile and install both the program and its dependent library together:
-```sh
+```
 $ cd HOME/go/src/github.com/vladimirvivien/go-tutorial/
 $ go install ./greetings2
 ```
@@ -385,7 +385,7 @@ Since package `greetings2` imports package `github.com/vladimirvivien/go-tutoria
 This section covers the fundamentals of the Go language including data types, variable declaration, and other language construct that are crucial in understanding the language.
 
 ### Variables
-Go is a *strongly typed* language where all variables must have a value and a type.  The following shows several variables being declared with their explicit types:
+Go is a *strongly typed* language where all variables must have a value and a type.  When a variable is declared, it must receive a type and a value.  The following shows a long form of the declaration where the type is explicitly provided and the value is subsequently given:
 ```go
 package main
 
@@ -420,7 +420,10 @@ func main() {
 	fmt.Println("Satellites", satellites)
 }
 ```
-The previous program shows the *long way*	of declaring and then subsequently assigning values to the variables.  The language also offers an expressive syntax, that can feel like dynamic language,  where the type can be inferred and the value can be assigned in one statement as shown below.
+
+The previous program shows the *long way*	of declaring variables without explicit initial values.  Each type however, has a default value, known as the *zero-value*, that is assigned to the variable when no explicit initialized values are provided.  For numeric values it is `0`, for string values it's the empty string `""`, boolean value is `false`.
+
+The language also offers an expressive syntax for variable declaration, that can feel like dynamic language,  where the type can be inferred and the value can be assigned in one statement as shown below.
 
 ```go
 var name = "Mars"
@@ -449,9 +452,24 @@ func main() {
 ...
 }
 ```
-### Primitive types
+When the type is omitted from a variable declaration, the Go compiler uses the literal representation of the assigned value to infer a natural type.  The following shows some inferred types based on the assigned values:
+
+```go
+ name := "Neptune"    // string
+ radius := 24764      // int
+ mass := 1.024e26     // float64
+ active := true       // bool
+```
+ 
+### Primitive data types
+Go support several numeric types including:
+- *Signed* integers: `int8`, `int16`, `int32`, `int64` , and `int`
+- *Unsigned* integers: `uint8`, `uint16`, `uint32`, `uint64` , and `uint`
+- *Character representation*: type `rune` an `int32` alias
+- *Byte values*: type `byte` an alias for uint8
+- *Floating point* types: `float32` and `float64`
+- *Complex numbers*
 ### Composite types
-### String data type
 ### Pointers
 ### Interfaces
 ### Other data types
