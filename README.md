@@ -432,7 +432,7 @@ var radius = 3396.2
 var mass = 6.4185e23
 var active = true
 ```
-When variables are declared inside a function, the declaration can get even shorter by dropping the `var` keyword as shown in the following example.  This is one of the most idiomatic version of type declaration that will encounter.
+When variables are declared inside a function, the declaration can get even shorter by dropping the `var` keyword as shown in the following example.  This forms combines the declaration and initialization of variable in one step.  This is one of the most idiomatic version of type declaration that you will encounter.
 
 ```go
 package main
@@ -452,6 +452,8 @@ func main() {
 ...
 }
 ```
+> Note that operator `:=` only initializes the variable.  Further update of the variable must be done using the `=` operator.
+
 When the type is omitted from a variable declaration, the Go compiler uses the literal representation of the assigned value to infer a natural type.  The following shows some inferred types based on the assigned values:
 
 ```go
@@ -462,16 +464,167 @@ When the type is omitted from a variable declaration, the Go compiler uses the l
 ```
  
 ### Primitive data types
-Go support several numeric types including:
+Go support several *numeric types*:
 - *Signed* integers: `int8`, `int16`, `int32`, `int64` , and `int`
 - *Unsigned* integers: `uint8`, `uint16`, `uint32`, `uint64` , and `uint`
 - *Character representation*: type `rune` an `int32` alias
-- *Byte values*: type `byte` an alias for uint8
-- *Floating point* types: `float32` and `float64`
-- *Complex numbers*
+- *Byte values*: type `byte` an alias for `uint8`
+- *Floating point* types `float32` and `float64`
+- *Complex numbers* types `complex64` and `complex128` 
+
+*Boolean type*:
+- Go has a boolean type `bool` representing values `true` or `false`.
+
+*String type*:
+To represent text Go uses type `string` which stores a sequence of `rune` capable of UTF-8 encoded string values.
+
+Primitive type examples: 
+```go
+var color uint32 = 0xFEFEFE  	// hex, uint32
+var mod = 0466               	// octal, int
+count := 1245                	// decimal, int
+avogadro := 6.0221409e+1	 	// float64
+value := "automobile"			// string
+
+```
 ### Composite types
-### Pointers
-### Interfaces
-### Other data types
-### Zero Values
+Composite types are used to store sequences of values of primitive types.  Composite literals values are contained within curly-braces preceded by the type as shown below.
+
+#### *Array*
+Type *array* represents a fixed-size sequenced values numerically indexed.  
+```
+steps := [3]string{"SEND", "RCVD", "WAIT"} 	// size 3 array, initialized
+fmt.Println(steps[1]) 						// prints "RCVD" 
+steps = append(steps, "PAUSE")				// index out of range error
+```
+
+#### *Slice*
+A slice is a dynamically-sized array.  The slice omits its as part of its type declaration as its size can change at runtime.   Slices can be initialized with a composite literal or with the `make()` built-in function:
+```
+steps := []string{"SEND", "RCVD", "WAIT"} 	// slice initialized with 3 elements
+fmt.Println(steps[1]) 						// prints "RCVD" 
+steps = append(steps, "PAUSE")				// slice expanded to size 4
+steps[3] = "RESUME"							// updates value at index 4
+
+actions := make([]int, 2)					// initializes a slice of size 3
+actions[0] = "PRINT"
+actions[1] = "LOG"
+actions = append(actions, "ADD")			// expand, size now 3
+```
+Go also supports slice expressions which can be used to create new slices from arrays or other slices.  For instance, slice `summer` is created by slicing existing array `months`
+```
+months := [12]string{
+    	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+}
+summer := months[5:9]
+```
+#### *Map*
+A map is a dynamically-sized composite type that stores elements of arbitrary types that are indexes using a values of  type.  A map can be initialized using a composite literal:
+```
+ratings := map[string][]int{
+	"men":   {32, 55, 12, 55, 42, 53},
+	"women": {44, 42, 23, 41, 65, 44},
+}
+
+ratings["children"] = []int{2,34,5,43,64,22}
+```
+A map can also be initialized using the built-in function `make()` as shown below:
+```
+histogram := make(map[int]string)
+hist["Jan"] = 100
+hist["Feb"] = 445
+hist["Mar"] = 514
+```
+#### *Struct*
+The struct type is a composite that stores named elements of diverse types known as fields.
+```
+car  := struct{year int, make, model string}{
+    make:  "Ford",
+    model: "f150",
+    year:  2017,
+}
+```
+In the previous example, variable `car` is initialized as a struct with two fields `make` and `model` both of type `string`.  
+
+### The pointer type
+Go supports a type pointer which is a value that may be used to reference the memory address where the data is located. Go uses the `*` operator to designate a type as a pointer of that type.  The followings are examples of declaration of pointer types:
+```
+var scorePtr *float32
+```
+Pointer variables can only be assigned address values of its declared type.  One way to do so in Go is to use the address operator `&` (ampersand) to obtain the address of a variable as shown in the following example:
+```
+score := 32
+scorePtr = &score		// pointer assigned address
+*scorePtr = 44			// pointer dereferenced with value
+```
+### The function type
+In Go, a function is also a type that can be assigned to a variable or stored for later use.  A function can be *named* or be assigned to a identifier as shown in the following example:
+```
+func main() {
+	printLn := func(val string) {
+		fmt.Println(len(val))
+	}
+	run(printLn)
+}
+
+func run(f func(string)) {
+	if f != nil {
+		f("Hello")
+	}
+}
+```
+
 ### Type declaration
+Go allows a type declaration to receive an identifier so that the type may be reused by referring to its name.  For instance, type `struct{year int; make, model string}` can be assigned a name `car` so that subsequent variable declarations only needs to use the type name as shown below.
+```
+package main
+import "fmt"
+
+type car struct {
+    year int,
+	make,
+	model string
+}
+
+func main() {
+	ford := car{
+	    year: 2001,
+		make:  "Ford",
+		model: "F150",
+	}
+
+	fmt.Println(ford.make, ford.model)
+
+	chevy := car{
+	    year: 2012,
+		make:  "Chevrolet",
+		model: "Silverado",
+	}
+
+	fmt.Println(chevy)
+}
+```
+
+### Methods on types
+Methods are functions that are attached to a type.  Most Go types can receive a function via a special parameter, called a receiver parameter, that associate the function to the type.  The following example shows that type `*car` can receive method `drive()`:
+```
+type car struct {
+	make,
+	model string
+}
+
+func (c *car) drive() {
+    fmt.Println("driving a", c.make, c.model)
+}
+
+func main() {
+	ford := &car{
+		make:  "Ford",
+		model: "F150",
+	}
+
+	ford.drive()
+}
+```
+So, variable `ford` of type `*car` can invoke function `ford.drive()`.
