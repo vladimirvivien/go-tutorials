@@ -391,11 +391,11 @@ package main
 
 import "fmt"
 
-var name, desc string
-var radius int32
-var mass float64
-var active bool
-var satellites []string
+var name, desc string		// declares two variables of type string
+var radius int32			// variable of type int32
+var mass float64			// variable of type float64
+var active bool				// variable of type bool
+var satellites []string		// variable of type []string
 
 func main() {
 	name = "Sun"
@@ -426,13 +426,13 @@ The previous program shows the *long way*	of declaring variables without explici
 The language also offers an expressive syntax for variable declaration, that can feel like dynamic language,  where the type can be inferred and the value can be assigned in one statement as shown below.
 
 ```go
-var name = "Mars"
-var desc = "Planet"
-var radius = 3396.2
-var mass = 6.4185e23
-var active = true
+var name = "Mars"		// inferred as type string
+var desc = "Planet"		// inferred as type string
+var radius = 3396.2		// inferred as type float64
+var mass = 6.4185e23	// inferred as type float64
+var active = true		// inferred as type bool
 ```
-When variables are declared inside a function, the declaration can get even shorter by dropping the `var` keyword as shown in the following example.  This forms combines the declaration and initialization of variable in one step.  This is one of the most idiomatic version of type declaration that you will encounter.
+When variables are declared inside a function, the declaration can get even shorter by dropping the `var` keyword as shown in the following example.  This forms combines the declaration and initialization of variable in one step.  Even without the type information, the compiler uses the literal text to infer a type for each variable.  This is one of the most idiomatic version of type declaration that you will encounter.
 
 ```go
 package main
@@ -440,11 +440,12 @@ package main
 import "fmt"
 
 func main() {
-	name := "Neptune"
-	desc := "Planet"
-	radius := 24764
-	mass := 1.024e26
-	active := true
+	name := "Neptune"    // type string
+	desc := "Planet"     // type string
+	radius := 24764      // type int
+	mass := 1.024e26     // type float64
+	active := true       // type bool
+	
 	satellites := []string{
 		"Naiad", "Thalassa", "Despina", "Galatea"
 		"Triton", "Nereid", "Halimede", "Sao",
@@ -453,15 +454,6 @@ func main() {
 }
 ```
 > Note that operator `:=` only initializes the variable.  Further update of the variable must be done using the `=` operator.
-
-When the type is omitted from a variable declaration, the Go compiler uses the literal representation of the assigned value to infer a natural type.  The following shows some inferred types based on the assigned values:
-
-```go
- name := "Neptune"    // string
- radius := 24764      // int
- mass := 1.024e26     // float64
- active := true       // bool
-```
  
 ### Primitive data types
 Go support several *numeric types*:
@@ -485,7 +477,6 @@ var mod = 0466               	// octal, int
 count := 1245                	// decimal, int
 avogadro := 6.0221409e+1	 	// float64
 value := "automobile"			// string
-
 ```
 ### Composite types
 Composite types are used to store sequences of values of primitive types.  Composite literals values are contained within curly-braces preceded by the type as shown below.
@@ -574,6 +565,53 @@ func run(f func(string)) {
 	}
 }
 ```
+In Go, a function can *return* a list of value of different types.  This idiom is often used as a way of handling errors from a function (or method) call.  For instance, the following function returns two values, one is the expected `int` value, and the other one is an `error` type used to signal any exceptional faults caused by the function call.
+```
+package main
+import (
+	"fmt"
+	"os"
+	"errors"
+)
+
+func main() {
+	val, err := div(4, 0)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(val)
+}
+
+func div(op0, op1 int) (int, error) {
+	if op1 == 0 {
+		return 0, errors.New("div by zero")
+	}
+	return op0 / op1, nil
+}
+```
+### Methods 
+Methods are functions that are attached to a type.  Most Go types can receive a function via a special parameter, called a receiver parameter, that associate the function to the type.  The following example shows that type `*car` can receive method `drive()`:
+```
+type car struct {
+	make,
+	model string
+}
+
+func (c *car) drive() {
+    fmt.Println("driving a", c.make, c.model)
+}
+
+func main() {
+	ford := &car{
+		make:  "Ford",
+		model: "F150",
+	}
+
+	ford.drive()
+}
+```
+So, variable `ford` of type `*car` can invoke function `ford.drive()`.
 
 ### Type declaration
 Go allows a type declaration to receive an identifier so that the type may be reused by referring to its name.  For instance, type `struct{year int; make, model string}` can be assigned a name `car` so that subsequent variable declarations only needs to use the type name as shown below.
@@ -605,26 +643,84 @@ func main() {
 	fmt.Println(chevy)
 }
 ```
-
-### Methods on types
-Methods are functions that are attached to a type.  Most Go types can receive a function via a special parameter, called a receiver parameter, that associate the function to the type.  The following example shows that type `*car` can receive method `drive()`:
+### Flow control
+Go supports the expected flow control from a modern language for branching and looping as outlined in the his section.
+#### if statement
 ```
-type car struct {
-	make,
-	model string
+if len(os.Args) >= 2 {
+	lang = os.Args[1]
 }
-
-func (c *car) drive() {
-    fmt.Println("driving a", c.make, c.model)
+```
+Another idiomatic version of the `if` statement uses an initializer expression as shown below:
+```
+if result, err := div(4, 0); err != nil {
+	fmt.Println(err)
 }
+```
+While this version of the if statement it compact, it captures the variables which go out of scope at the end of the if statement.
 
+#### switch statement
+Go supports multi-way branching using a `switch` statement as found in other languages.  
+```
+func next(state string) string {
+    switch state{
+    case "S":
+        return "START"
+    case "P", "E", "H": 
+        return "STOP"
+    default:
+        return "PAUSE"
+    }
+}
+```
+Go also supports an expression-less switch statement that can be used as a replacement for if-else chains:
+```
+switch {
+case a == b:
+// do something
+case c != d, d < 10
+// do someting
+default:
+// do something
+}
+```
+#### for statement
+Go offers the traditional *for* statement that loops sequentially after testing a given condition. 
+The following shows several forms of the for statement:
+```
+// semantically similar to while, do-while
+for a < 10 {
+    // do something
+}
+```
+Next you have the traditional loop with an initializer and update index value:
+```
+// traditionally used to walk arrays and slices
+nums := []int{2, 34, 5, 43, 64, 22}
+for i := 0; i < 6; i = i + 2 {
+	fmt.Println(nums[i])
+}
+```
+#### for-range statement
+The for-range statement is an idiomatic Go construct that is provided to walk the slice, array, map, and channels (we'll see channels later).  When the value is a slice or an array, the for-range expression emits the index and the actual value for each element as shown below:
+```
 func main() {
-	ford := &car{
-		make:  "Ford",
-		model: "F150",
+	nums := []int{2, 34, 5, 43, 64, 22}
+	for index, value := range nums{
+		fmt.Printf("nums[%d] = %d\n", index, value)
 	}
-
-	ford.drive()
 }
 ```
-So, variable `ford` of type `*car` can invoke function `ford.drive()`.
+When the value is a map, the for-range statement emits the key and the value for each element with each passing of the loop as shown below:
+```
+func main() {
+	ratings := map[string][]int{
+		"men":      {32, 55, 12, 55, 42, 53},
+		"women":    {44, 42, 23, 41, 65, 44},
+		"children": {2, 34, 5, 43, 64, 22},
+	}
+	for key, value := range ratings {
+		fmt.Printf("ratings[%s] = %v\n", key, value)
+	}
+}
+```
