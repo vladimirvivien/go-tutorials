@@ -59,7 +59,7 @@ Go can be installed on your local machine in either of the following ways:
 - Build from source 
 Use URL [https://golang.org/doc/install](https://golang.org/doc/install) to follow instruction on your preferred method of installation for your target environment.
 
-## Setup your workspace
+### Setup your workspace
 Before you get introduced to your first Go program, let us take a moment to discuss your environment for local development.  After you install your Go toolchain, it is crucial that you properly setup your workspace.  It is an arbitrary directory which stores your Go source files, organized as packages, and built artifacts (such as object files and executable binaries) as shown in the following sample workspace:
 ```sh
 $HOME/go
@@ -90,7 +90,7 @@ go env GOPATH
 /Users/vvivien/DEV/go
 ```
 
-## Editors and IDE
+### Editors and IDE
 Because of its minimal syntax, working with Go can be done using your favorite text editor.  Some editors include features such as syntax higlights while others have deep integrations with the Go toolchain to provide an IDE-like experience.  Some of the more well-known editors with Go support include:
 - Atom
 - Emacs
@@ -420,7 +420,6 @@ func main() {
 	fmt.Println("Satellites", satellites)
 }
 ```
-
 The previous program shows the *long way*	of declaring variables without explicit initial values.  Each type however, has a default value, known as the *zero-value*, that is assigned to the variable when no explicit initialized values are provided.  For numeric values it is `0`, for string values it's the empty string `""`, boolean value is `false`.
 
 The language also offers an expressive syntax for variable declaration, that can feel like dynamic language,  where the type can be inferred and the value can be assigned in one statement as shown below.
@@ -454,6 +453,31 @@ func main() {
 }
 ```
 > Note that operator `:=` only initializes the variable.  Further update of the variable must be done using the `=` operator.
+
+#### The blank identifier `_`	
+A declared variable must be subsequently used in an expression or a statement or failure to do so will result in a compilation error.  For instance, the following snippet will not compile because variable `b` is declared and not used.
+```go
+func main() {
+    a := 12
+    b := a
+    fmt.Println (a)
+}
+```
+In some situations however, you may need to use a placeholder instead of an actual variable. Go supports the use of a blank identifier `_` which can be bound to a value and does not require subsequent usage.  The blank identifier provides an idiom where values are discarded as shown in the following snippet:
+```go
+package main
+
+import (
+	"fmt"
+	"path"
+)
+
+func main() {
+	_, f := path.Split("a/b/c/file.ext")
+	fmt.Println(f)
+}
+```
+In the previous example, function `path.Split(path)(dirName,fileName)` returns two values `dirName` and `fileName`.  In the code, however, we discard of the value for `dirName` by binding it to the blank identifier.
  
 ### Primitive data types
 Go support several *numeric types*:
@@ -484,23 +508,36 @@ Composite types are used to store sequences of values of primitive types.  Compo
 #### *Array*
 Type *array* represents a fixed-size sequenced values numerically indexed.  
 ```
-steps := [3]string{"SEND", "RCVD", "WAIT"} 	// size 3 array, initialized
-fmt.Println(steps[1]) 						// prints "RCVD" 
-steps = append(steps, "PAUSE")				// index out of range error
+func main(){
+    steps := [3]string{"SEND", "RCVD", "WAIT"} 	// size 3 array, initialized
+    fmt.Println(steps[1]) 			// prints "RCVD" 
+    steps[3] = "PAUSE"				// index out of range error
+}
+```
+The size of an array remains static throughout its lifetime.  Attempt to access data beyond the declared bound of the array will result in a runtime error as shown above.  
+
+Go provides `for-range` construct to walk the items of an array.  With each iteration, the for-range expression emits the current index and the value of the item in the array as shown below:
+```go
+func main(){
+    steps := [3]string{"SEND", "RCVD", "WAIT"}
+    for index, value := range steps {
+        fmt.Printf("step %d = %s\n", index, value)
+    }   
+}
 ```
 
 #### *Slice*
-A slice is a dynamically-sized array.  The slice omits its as part of its type declaration as its size can change at runtime.   Slices can be initialized with a composite literal or with the `make()` built-in function:
+A slice is a dynamically-sized array.  The slice omits its size as part of its type declaration as shown in the snippet below.   Slices can be initialized with a composite literal or with the `make()` built-in function:
 ```
 steps := []string{"SEND", "RCVD", "WAIT"} 	// slice initialized with 3 elements
 fmt.Println(steps[1]) 						// prints "RCVD" 
 steps = append(steps, "PAUSE")				// slice expanded to size 4
 steps[3] = "RESUME"							// updates value at index 4
 
-actions := make([]int, 2)					// initializes a slice of size 3
+actions := make([]int, 2)					// initializes a slice of size 2
 actions[0] = "PRINT"
 actions[1] = "LOG"
-actions = append(actions, "ADD")			// expand, size now 3
+actions = append(actions, "ADD")			// expands slice, size now 3
 ```
 Go also supports slice expressions which can be used to create new slices from arrays or other slices.  For instance, slice `summer` is created by slicing existing array `months`
 ```
@@ -508,8 +545,26 @@ months := [12]string{
     	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
     	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 }
-summer := months[5:9]
+summer := months[5:8]
 ```
+Similar to arrays, Go can use the `for-range` construct to iterate over slice items as shown in the following example:
+```go
+func main() {
+	months := [12]string{
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	}
+	summer := months[5:8]
+	
+	fmt.Println("--Summer Months--")
+	
+	for _, month := range summer {
+	    fmt.Println(month)
+	}
+}
+```
+Note that in this example, we assign the index value of the item to the blank identifier, `_`, so that we can ignore it.
+
 #### *Map*
 A map is a dynamically-sized composite type that stores elements of arbitrary types that are indexes using a values of  type.  A map can be initialized using a composite literal:
 ```
@@ -522,24 +577,44 @@ ratings["children"] = []int{2,34,5,43,64,22}
 ```
 A map can also be initialized using the built-in function `make()` as shown below:
 ```
-histogram := make(map[int]string)
+hist := make(map[string]int)
 hist["Jan"] = 100
 hist["Feb"] = 445
 hist["Mar"] = 514
 ```
-#### *Struct*
-The struct type is a composite that stores named elements of diverse types known as fields.
-```
-car  := struct{year int, make, model string}{
-    make:  "Ford",
-    model: "f150",
-    year:  2017,
+The `for-range` statement can also be used with map values.  In this context, the range expression emits the key and the value of each element in the map as shown in the following example:
+```go
+func main() {
+	hist := make(map[string]int)
+	hist["Jan"] = 100
+	hist["Feb"] = 445
+	hist["Mar"] = 514
+	
+	for key, value := range hist {
+	    fmt.Printf("histogram[%s] = %d\n", key, value)
+	}
 }
 ```
-In the previous example, variable `car` is initialized as a struct with two fields `make` and `model` both of type `string`.  
+#### *Struct*
+The *struct* type is a composite that stores named elements of diverse types known as fields.  The following example creates variable `truck` as type `struct{year int; make, model string}` and initializes it with a composite literal.
+```
+func main() {
+	truck := struct {
+		year        int
+		make, model string
+	}{
+		make:  "Ford",
+		model: "F150",
+		year:  2017,
+	}
+
+	fmt.Printf("Truck: %d %s %s\n", truck.year, truck.make, truck.model)
+}
+```
+The struct uses the dot notation to access field members of the struct.
 
 ### The pointer type
-Go supports a type pointer which is a value that may be used to reference the memory address where the data is located. Go uses the `*` operator to designate a type as a pointer of that type.  The followings are examples of declaration of pointer types:
+Go supports a type pointer which is a value that may be used to reference the memory address where the data is located. Go uses the `*` operator to designate a type as a pointer of that type.  The followings are examples of declaration of pointer type where `scorePtr` is a pointer to type `float32`:
 ```
 var scorePtr *float32
 ```
@@ -549,6 +624,33 @@ score := 32
 scorePtr = &score		// pointer assigned address
 *scorePtr = 44			// pointer dereferenced with value
 ```
+While Go only support pass-by-value when calling a function/method, pointers can be used to create a pass-by-reference idiom.  For instance, in the following, variable `score` will not be updated after a call to function `adjust()` because the function receives a copy of the value via parameter `val`:
+```go
+func main() {
+	score := 32
+	adjust(score)
+	fmt.Println(score)    // score not updated
+}
+
+func adjust(val int) {
+	val = val * 4
+}
+```
+However, we can modify function `adjust()` to receive a value of type `*int` instead which causes a copy of the address of the original value to be passed to the function thus mimicking pass-by-reference as shown below.
+```go
+func main() {
+	score := 32
+	scorePtr := &score
+	adjust(scorePtr)
+	fmt.Println(score)    // score is updated
+}
+
+func adjust(val *int) {
+	*val = *val * 4
+}
+``` 
+
+
 ### The function type
 In Go, a function is also a type that can be assigned to a variable or stored for later use.  A function can be *named* or be assigned to a identifier as shown in the following example:
 ```
@@ -614,33 +716,52 @@ func main() {
 So, variable `ford` of type `*car` can invoke function `ford.drive()`.
 
 ### Deferring functions and method calls
-Function (or method) calls can be deferred using the `defer` statement which ensures that the function is called right before exiting the calling function.  Deferring function calls is an idiom common in Go to implement clean up logic such as closing a network connections, closing channel, deleting unwanted test files, etc.  The following uses a defer statement to cleanse `data` passed in before function `consume()` exits.
+Function (or method) calls can be deferred using the `defer` statement which is called right before returning from the surrounding function.  Deferring function calls is an idiom common in Go to implement lifecycle logic such as clean up logic, closing a network connections, closing channel, deleting unwanted test files, or any other tasks that should always happen when the called function is returning.  
+
+The following uses a defer statement to print a separator right before function `print()` exits.
 ```go
 func main() {
-    data := map[string]int{
-        // initialize data
-    }
-   
-    consume(data)
-    
+    print([]string{"Hello", "Goodbye!"})
+    print([]string{"North", "South", "East", "West"})
+    print([]string{"Sad", "Happy", "Cry"})
 }
 
-func consume(data map[string]int) 
-    defer func() { // clean before leaving
-        for k, _ := range data {
-            data[k] = 0
-        }
-    }()
-    
-    for k, v := range data {
-        fmt.Println(k, v)
+func print(data []string) {
+    defer fmt.Println("----")
+    for _, d := range data {
+        fmt.Println(d)
     }
 }
 ```
+A more realistic example shows a simple and HTTP client that retrieves the full text of literary classic Beowulf from the Project Gutenberg's website.  Notice how `defer` is used, in function `print()` to close the resource before exiting the function. 
+```go
+package main
 
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+)
+
+func main() {
+	client := http.Client{}
+	resp, err := client.Get("http://gutenberg.org/cache/epub/16328/pg16328.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	print(resp.Body)
+}
+func print(body io.ReadCloser) {
+	defer body.Close()
+	io.Copy(os.Stdout, body)
+}
+```
 ### Type declaration
 Go allows a type declaration to receive an identifier so that the type may be reused by referring to its name.  For instance, type `struct{year int; make, model string}` can be assigned a name `car` so that subsequent variable declarations only needs to use the type name as shown below.
-```
+
+```go
 package main
 import "fmt"
 
@@ -668,16 +789,77 @@ func main() {
 	fmt.Println(chevy)
 }
 ```
+### Interfaces 
+Another feature that gets celebrated in Go are interfaces.  An interface in Go is a type that represents a set of zero or more methods.  Any other type that implements that set of methods automatically implements the interface.  For instance, built-in package `io` defines interfaces `io.Reader` and `io.Writer` for IO input and output respectively. 
+```go
+// io.Reader
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+// io.Writer
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+```
+Therefore, any type that implements method `Read(p []byte) (n int, err error)` automatically implements `io.Reader` and any type that implements method `Write(p []byte) (n int, err error)` is considered an `io.Writer` by the type system.  
+
+For instance, built-in function `io.WriterString(w io.Writer, s string)`, from the `os` package, uses any value `w` that implements `io.Writer` to output a string.  We use that function in wrapper function `WriteData(io.Writer,string[])` to output the string slice to any value that implements the io.Writer interface:
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"bytes"
+)
+
+func main() {
+    proverbs := []string{
+        "Channels orchestrate mutexes serialize", 
+        "Cgo is not Go",
+        "Errors are values",
+        "Don't panic",
+    }
+    
+    // write to in-mem buffer
+    buf := new(bytes.Buffer)
+    WriteData(buf, proverbs)
+
+    // write to stdout
+    WriteData(os.Stdout, proverbs)
+
+    // open file for writing
+    file, err := os.Create("./textfile.txt")
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    defer file.Close()
+
+    // write to file
+    WriteData(file, proverbs)
+}
+
+func WriteData(writer io.Writer, data []string) {
+    for _, d := range data {
+        io.WriteString(writer, d)
+    }
+}
+```
+The previous code uses function `WriteData(writer io.Writer, data []string)` to output string slice `data` to different target including an in-memory buffer `buf` of type `*bytes.Buffer`, standard output `os.Stdout`, and file object `file` of type `*os.File` which are all values that implement `io.Writer`.
+
 ### Flow control
 Go supports the expected flow control from a modern language for branching and looping as outlined in the his section.
 #### if statement
-```
+```go
 if len(os.Args) >= 2 {
 	lang = os.Args[1]
 }
 ```
 Another idiomatic version of the `if` statement uses an initializer expression as shown below:
-```
+```go
 if result, err := div(4, 0); err != nil {
 	fmt.Println(err)
 }
@@ -686,7 +868,7 @@ While this version of the if statement it compact, it captures the variables whi
 
 #### switch statement
 Go supports multi-way branching using a `switch` statement as found in other languages.  
-```
+```go
 func next(state string) string {
     switch state{
     case "S":
@@ -699,7 +881,7 @@ func next(state string) string {
 }
 ```
 Go also supports an expression-less switch statement that can be used as a replacement for if-else chains:
-```
+```go
 switch {
 case a == b:
 // do something
@@ -726,34 +908,11 @@ for i := 0; i < 6; i = i + 2 {
 	fmt.Println(nums[i])
 }
 ```
-#### for-range statement
-The for-range statement is an idiomatic Go construct that is provided to walk the slice, array, map, and channels (we'll see channels later).  When the value is a slice or an array, the for-range expression emits the index and the actual value for each element as shown below:
-```
-func main() {
-	nums := []int{2, 34, 5, 43, 64, 22}
-	for index, value := range nums{
-		fmt.Printf("nums[%d] = %d\n", index, value)
-	}
-}
-```
-When the value is a map, the for-range statement emits the key and the value for each element with each passing of the loop as shown below:
-```
-func main() {
-	ratings := map[string][]int{
-		"men":      {32, 55, 12, 55, 42, 53},
-		"women":    {44, 42, 23, 41, 65, 44},
-		"children": {2, 34, 5, 43, 64, 22},
-	}
-	for key, value := range ratings {
-		fmt.Printf("ratings[%s] = %v\n", key, value)
-	}
-}
-```
 ## Concurrency with goroutines and channels
 Concurrency is considered to be the one of the most attractive features of the Go programming language.  Its adopters revel in the simplicity of its primitives to express correct concurrency.  Go has its own concurrency primitive called the *goroutine* that allows a program to launch a function/method (or routine) to execute independently from its calling function. 
 
 For instance, the following program uses the *go* statement to launch three *goroutines* that get executed concurrently, along with the main function.  The `fmt.Scanln()` function call is used for its side-effect of blocking the `main` function which causes it to wait for the goroutines to have time to complete.
-```
+```go
 package main
 
 import (
@@ -862,3 +1021,110 @@ func display(done chan bool) {
    close(done)  // channel is closed
 }
 ```
+## Data IO and communication
+In Go, input and output operations are achieved by using primitives that model data as streams of bytes that can be read from or written to.  Go uses interfaces  `io.Reader` and `io.Writer`, for all data input and output operations respectively:
+```go
+// io.Reader
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+// io.Writer
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+```
+Therefore, any type that implements method `Read(p []byte) (n int, err error)` automatically implements `io.Reader` and any type that implements method `Write(p []byte) (n int, err error)` is considered an `io.Writer` by the type system.  
+
+### Data Input
+The `fmt` package can be used to read (or *scan*) text from standard input or any other resource that implement `io.Reader`.  For instance, the following code shows how to use `fmt.Scanf()` to input a single integer value from standard in:
+```go
+func main() {
+	var choice int
+	fmt.Println("A square is what?")
+	fmt.Print("Enter 1=quadrilateral 2=rectagonal: ")
+
+	n, err := fmt.Scanf("%d", &choice)
+	if n != 1 || err != nil {
+		fmt.Println("invalid choice")
+		os.Exit(1)
+	}
+	if choice == 1 {
+		fmt.Println("You are correct")
+	} else {
+		fmt.Println("sorry")
+	}
+}
+```
+Reading from a file can be just as easy.
+#### Formatted Output
+We can use function `fmt.Fprintf()` to send formatted output to any value that implements the `io.Writer` interface as shown in the following example where `fmt.Fprintf()` is used to output formatted data to variable `buf` of type `bytes.Buffer` which implements `io.Writer`:
+```go
+package main
+
+import (
+	"fmt"
+	"bytes"
+)
+
+func main() {
+	proverbs := []string{
+		"Channels orchestrate mutexes serialize",
+		"Cgo is not Go",
+		"Errors are values",
+		"Don't panic",
+	}
+	
+    // bytes.Buffer an in-mem io.Writer
+    buf := new(bytes.Buffer)
+    
+    for i, p := range proverbs {
+        fmt.Fprintf(buf, "Proverb %d = %s\n", i, p)
+    }
+    fmt.Println(buf.String())
+}
+```
+We can modify the previous program to output the formatted text to the standard output instead of an in-memory structure using `os.Stdout`, an `io.Writer`:
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	proverbs := []string{
+		"Channels orchestrate mutexes serialize",
+		"Cgo is not Go",
+		"Errors are values",
+		"Don't panic",
+	}
+	
+    for i, p := range proverbs {
+        fmt.Fprintf(os.Stdout, "Proverb %d = %s\n", i, p)
+    }
+}
+```
+It should be noted that writing to standard output can also be done with function `fmt.Printf()` which uses os.Stdout internally:
+```go
+func main() {
+	proverbs := []string{
+		"Channels orchestrate mutexes serialize",
+		"Cgo is not Go",
+		"Errors are values",
+		"Don't panic",
+	}
+	
+    for i, p := range proverbs {
+        fmt.Printf("Proverb %d = %s\n", i, p)
+    }
+}
+```
+### Socket communications
+
+## Testing
+
+## Standard library
+
+## Go tools
