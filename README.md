@@ -853,6 +853,7 @@ The previous code uses function `WriteData(writer io.Writer, data []string)` to 
 ### Flow control
 Go supports the expected flow control from a modern language for branching and looping as outlined in the his section.
 #### if statement
+As you would expect, Go has the normal *if* statement as shown below:
 ```go
 if len(os.Args) >= 2 {
 	lang = os.Args[1]
@@ -867,45 +868,67 @@ if result, err := div(4, 0); err != nil {
 While this version of the if statement it compact, it captures the variables which go out of scope at the end of the if statement.
 
 #### switch statement
-Go supports multi-way branching using a `switch` statement as found in other languages.  
+Go supports multi-way branching using a `switch` statement as shown in the following example.  Notice the case clause can evaluate any comparable types (not just numeric) and multiple cases can be evaluated separated by a comma:  
 ```go
-func next(state string) string {
-    switch state{
-    case "S":
-        return "START"
-    case "P", "E", "H": 
-        return "STOP"
-    default:
-        return "PAUSE"
-    }
+func main() {
+	states := []string{"S", "P", "P", "E", "", "X"}
+	for _, s := range states {
+		fmt.Println(next(s))
+	}
 }
+
+func next(state string) string {
+	switch state {
+	case "S":
+		return "START"
+	case "P":
+		return "PROC"
+	case "E":
+		return "PAUSE"
+	case "X", "H":
+		return "STOP"
+	default:
+		return "CONTINUE"
+	}
+}
+
 ```
 Go also supports an expression-less switch statement that can be used as a replacement for if-else chains:
 ```go
-switch {
-case a == b:
-// do something
-case c != d, d < 10
-// do someting
-default:
-// do something
+func main() {
+	a := 12
+	b := 0
+	c := b
+	switch {
+	case a == b:
+		fmt.Println("same")
+	case c == b, b == 0:
+		fmt.Println("starting")
+	default:
+		fmt.Println("nothing to do")
+	}
 }
 ```
 #### for statement
 Go offers the traditional *for* statement that loops sequentially after testing a given condition. 
 The following shows several forms of the for statement:
-```
-// semantically similar to while, do-while
-for a < 10 {
-    // do something
+```go
+// semantically equivalent to while loop
+func main() {
+	a := 12
+	for a > 6 {
+		fmt.Println(a)
+		a--
+	}
 }
 ```
-Next you have the traditional loop with an initializer and update index value:
-```
-// traditionally used to walk arrays and slices
-nums := []int{2, 34, 5, 43, 64, 22}
-for i := 0; i < 6; i = i + 2 {
-	fmt.Println(nums[i])
+The *for* statement can also include an initializer and update condition as shown below:
+```go
+func main(){
+    nums := []int{2, 34, 5, 43, 64, 22}
+    for i := 0; i < 6; i = i + 2 {
+	    fmt.Println(nums[i])
+    }
 }
 ```
 ## Concurrency with goroutines and channels
@@ -968,8 +991,8 @@ An unbuffered channel blocks immediately after a send operation until the item i
 ```go
 func main() {
     intsCh := make(chan int)
-    intsCh <- 5             // blocks main() forever
-    fmt.Println(<- c) 
+    intsCh <- 5			// blocks main() forever
+    fmt.Println(<- intsCh) 
 }
 ```
 A simple strategy to avoid deadlock when working with channels (unbuffered or buffered) is to place send operations in their own goroutine.  For instance, the previous is re-written where it does not block function `main()`:
@@ -1006,7 +1029,9 @@ func display(done chan bool) {
    done <- true  
 }
 ```
-In the previous example, function `main()` will block and wait at receive operation `<-doneCh` until the goroutine, launched by `go display()`, executes send operation `done <- true`.  Another important characteristic about channels we can use, when doing synchronization, is the fact that a closed channel does not block a receive operation.  So, we can rewrite the previous example by closing the channel instead of sending a value as shown below:
+In the previous example, function `main()` will block and wait at receive operation `<-doneCh` until the goroutine, launched by `go display()`, executes send operation `done <- true`.  
+
+Another important channel characteristic we can use, when doing synchronization, is the fact that a closed channel does not block a receive operation.  So, we can rewrite the previous example by closing the channel instead of sending a dummy value as shown below:
 ```go
 func main() {
     doneCh := make(chan bool)
@@ -1022,29 +1047,17 @@ func display(done chan bool) {
 }
 ```
 ## Data IO and communication
-In Go, input and output operations are achieved by using primitives that model data as streams of bytes that can be read from or written to.  Go uses interfaces  `io.Reader` and `io.Writer`, for all data input and output operations respectively:
-```go
-// io.Reader
-type Reader interface {
-    Read(p []byte) (n int, err error)
-}
+As mentioned earlier in the *Interfaces* section, Go uses interfaces  `io.Reader` and `io.Writer` to achieve streaming data input and output.  This section provides more examples on how to the built-in packages for data input and communication.
 
-// io.Writer
-type Writer interface {
-    Write(p []byte) (n int, err error)
-}
-```
-Therefore, any type that implements method `Read(p []byte) (n int, err error)` automatically implements `io.Reader` and any type that implements method `Write(p []byte) (n int, err error)` is considered an `io.Writer` by the type system.  
-
-### Data Input
-The `fmt` package can be used to read (or *scan*) text from standard input or any other resource that implement `io.Reader`.  For instance, the following code shows how to use `fmt.Scanf()` to input a single integer value from standard in:
+### Reading formatted data Standard In
+The `fmt` package can be used to read (or *scan*) formatted text input from standard input (provided as `os.Stdin`).  The following code shows how to use `fmt.Scanf()` to input a single integer value from standard in:
 ```go
 func main() {
 	var choice int
 	fmt.Println("A square is what?")
 	fmt.Print("Enter 1=quadrilateral 2=rectagonal: ")
 
-	n, err := fmt.Scanf("%d", &choice)
+	n, err := fmt.Scanf("%d", &choice) // uses global reader os.Stdin
 	if n != 1 || err != nil {
 		fmt.Println("invalid choice")
 		os.Exit(1)
@@ -1056,9 +1069,76 @@ func main() {
 	}
 }
 ```
-Reading from a file can be just as easy.
-#### Formatted Output
-We can use function `fmt.Fprintf()` to send formatted output to any value that implements the `io.Writer` interface as shown in the following example where `fmt.Fprintf()` is used to output formatted data to variable `buf` of type `bytes.Buffer` which implements `io.Writer`:
+### Reading formatted data from any io.Reader
+We can `fmt.Fscanf()` to read formatted text from an arbitrary reader.  Luckily, Go provides `*os.File` type, which implements `io.Reader`, represent a file from the filesystem.  Once we have a handle to a file, it's easy to use the functions in `fmt` for formatted reading.  For instance we have a space-delimited file like the following:
+
+We can use the `fmt.Fscanf()` to read into memory as shown in the following example:
+```go
+func main() {
+	var name, hasRing string
+	var diam, moons int
+
+	// open data file
+	file, err := os.Open("./planets.txt") // creates *os.File
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	// print formatted header
+	fmt.Printf("%-10s %-10s %-6s %-6s\n", 
+	    "Planet", "Diameter", "Moons", "Ring?",
+	)
+	for {
+		// scan value into variables
+		_, err := fmt.Fscanf(file, "%s %d %d %s\n", 
+		    &name, &diam, &moons, &hasRing,
+		)
+		
+		// check for io.EOF (end of file)
+		// which is returned as an error value
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+		fmt.Printf("%-10s %-10d %-6d %-6s\n", name, diam, moons, hasRing)
+	}
+}
+```
+### Using buffered IO for reading
+Go also supports buffered IO via the  `bytes` package. The package includes functions and types that make it easy to work with text content.  For instance, we can redo the previous program to read the content of `planets.txt` a line at a time delimited by  `\n` :
+```go
+func main() {
+	file, err := os.Open("./planets.txt")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file) 
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+		fmt.Print(line)
+	}
+}
+```
+
+### Writing data
+We have been using package `fmt`  throughout this document to print textual data to standard output using functions `fmt.Printf()` and `fmt.Println()`.  We can also print textual output to any arbitrary `io.Writer` using functions `fmt.Fprint` or `fmt.Fprintf()`.  For instance, the following snippet uses `fmt.Fprintf()` to write data to an in-memory buffer of type bytes.Buffer which implements `io.Writer`:
 ```go
 package main
 
@@ -1106,7 +1186,8 @@ func main() {
     }
 }
 ```
-It should be noted that writing to standard output can also be done with function `fmt.Printf()` which uses os.Stdout internally:
+The previous program can be updated further to write to a `*os.File` object which also implements `io.Writer`:
+
 ```go
 func main() {
 	proverbs := []string{
@@ -1115,16 +1196,349 @@ func main() {
 		"Errors are values",
 		"Don't panic",
 	}
-	
-    for i, p := range proverbs {
-        fmt.Printf("Proverb %d = %s\n", i, p)
-    }
+
+	file, err := os.Create("proverbs.txt")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	for i, p := range proverbs {
+		fmt.Fprintf(file, "Proverb %d = %s\n", i, p)
+	}
+	fmt.Println("proverbs.txt created")
 }
 ```
-### Socket communications
+## Data communications
+Go comes with a formidable set of functionalities for network communication using the `net` package.  We will only scratch the surface with a couple of examples to give you an idea what is possible with a few lines of code.
+### A simple socket server 
+To get started, let us create a simple echo server and client.  The server is implemented with a few lines of code, but is capable of scaling to handle large number of connections using a goroutine as shown below:
+```go
+package main
 
+import (
+	"bufio"
+	"fmt"
+	"net"
+	"os"
+)
+
+func main() {
+	listener, err := net.Listen("tcp", ":4040")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer listener.Close()
+	fmt.Println("echo server running on 4040...")
+
+	// connection loop
+	for {
+		// wait and accept new client connection
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// handle connection
+		// read text and echo it
+		go func(c net.Conn) {
+			defer conn.Close()
+			reader := bufio.NewReader(c)
+			for {
+				line, err := reader.ReadString('\n')
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				if _, err := fmt.Fprint(conn, line); err != nil {
+					fmt.Println(err)
+					return
+				}
+			}
+		}(conn)
+	}
+}
+```
+When the echo server program is started, a telnet session can be used to test it as shown below:
+```sh
+> telnet localhost 4040
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
+hello
+hello
+I like your hat
+I like your hat
+```
+###A simple socket client
+Writing a socket client in Go is just as easy.  The following is a simple client to the echo server above.  It captures the keyboard input using buffered IO reader `cmdReader`, then sends the data to the server, and lastly, prints the response from the server captured with `conReader`.
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"net"
+	"os"
+)
+
+var host, port = "127.0.0.1", "4040"
+var addr = net.JoinHostPort(host, port)
+
+func main() {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer conn.Close()
+	fmt.Println("Connected to echo server at:", addr)
+
+	for {
+		cmdReader := bufio.NewReader(os.Stdin)
+		conReader := bufio.NewReader(conn)
+
+		// read command-line input
+		data, err := cmdReader.ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// send data to server
+		if _, err := fmt.Fprint(conn, data); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// read server response
+		resp, err := conReader.ReadString('\n')
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Print(resp)
+	}
+}
+```
+### A simple web server
+Another well-appointed capability of Go is its support for creating HTTP-based servers and clients using the `http` package.  The following shows a program that implements a time API server which returns the current date/time of the server.  
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"time"
+)
+
+func main() {
+	http.HandleFunc("/", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(writer, "/now\n/date\n/time")
+	})
+
+	http.HandleFunc("/now", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now())
+	})
+
+	http.HandleFunc("/date", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now().Format("2006-01-02"))
+	})
+
+	http.HandleFunc("/time", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now().Format("03:04:05 MST"))
+	})
+
+	fmt.Println("time api server running on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+When we run the program, it immediately blocks to listen and serve incoming HTTP requests on port `8080`.  Using `cURL` we can test the program as shown below:
+```sh
+$ curl localhost:8080
+/now
+/date
+/time
+
+$ curl localhost:8080/now
+2017-08-02 08:32:14.854542532 -0400 EDT
+
+$ curl localhost:8080/time
+08:33:34 ED
+
+$ curl localhost:8080/date
+2017-08-02
+```
+The previous program uses a default package-provided server object with default configurations.  The URL routes are handled with function `http.HandleFunc` which takes a path and the function used to handle HTTP request.  The program can be re-written using an explicit declaration of multiplexer path handler and a server object for deep configuration as shown below:
+```go
+func main() {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(writer, "/now\n/date\n/time")
+	})
+
+	mux.HandleFunc("/now", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now())
+	})
+
+	mux.HandleFunc("/date", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now().Format("2006-01-02"))
+	})
+
+	mux.HandleFunc("/time", func(writer http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(writer, "%s", time.Now().Format("03:04:05 MST"))
+	})
+
+	server := http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ReadTimeout:  time.Second * 5,
+		WriteTimeout: time.Second * 3,
+	}
+
+	fmt.Println("time api server running on :8080")
+	if err := server.ListenAndServe(); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+### Writing HTTP clients
+The Go `http` package comes with everything you need to write robust HTTP client programs.  The following shows a simple client to the time api server above. 
+```go
+func main() {
+	resp, err := http.Get("http://127.0.0.1:8080/now")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	if _, err := io.Copy(os.Stdout, resp.Body); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+The previous code uses a default client object provided by the `http` package.  If you want want deep configuration control, you can provide your own client object as is shown below:
+```go
+func main() {
+	client := &http.Client{
+		Timeout: 21 * time.Second,
+	}
+	resp, err := client.Get("http://127.0.0.1:8080/date")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+	if _, err := io.Copy(os.Stdout, resp.Body); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+```
 ## Testing
+Code testing is a crucial feature of the Go ecosystem. Support for code testing is baked in the tooling and the standard library.  Test functions are regular functions that have a specific signature so that the `go test` tool can compile them.  Test functions are saved in files with names ending in `*_test.go` so that test sources are not included in the compiled binary for distribution.
+
+Let us consider the following source code for a library which contains simple functions for sum, max, and average, saved in a file called `math.go`:
+```go
+package main
+
+func sum(nums ...float64) float64 {
+	var sum float64
+	for i := 0; i < len(nums); i++ {
+		sum += nums[i]
+	}
+	return sum
+}
+
+func max(nums ...float64) float64 {
+	var max float64
+	for i := 0; i < len(nums); i++ {
+		if nums[i] > max {
+			max = nums[i]
+		}
+	}
+	return max
+}
+
+func avg(nums ...float64) float64 {
+	return sum(nums...) / float64(len(nums))
+}
+```
+To test these functions, we simply need to do the followings:
+
+- create a file file that ends in `*_test.go`
+- Next, in that test source file, create functions with name prefixes `TestXXX(t *testing.T)`
+
+The following source code, saved in file `math_test.go` shows the test function used to exercise the logic in the previous code:
+```go
+package main
+
+import "testing"
+
+func TestSum(t *testing.T) {
+	expected := 16
+	actual := sum(5, 5, 3, 3)
+	if actual != float64(expected) {
+		t.Errorf("expecting 16, go %f", actual)
+	}
+}
+
+func TestMax(t *testing.T) {
+	expected := float64(1.2)
+	actual := max(1.2, 0.3, 1.02, 0.20, 0.175)
+	if actual != expected {
+		t.Errorf("expecting 1.2, got %f", actual)
+	}
+}
+
+func TestAvg(t *testing.T) {
+	cases := []struct {
+		nums []float64
+		avg  float64
+	}{
+		{[]float64{5, 5, 3, 3}, 4},
+		{[]float64{3, 9, 3}, 5},
+		{[]float64{3.5, 1.5, 3.2, 1.8}, 2.5},
+	}
+
+	for _, c := range cases {
+		actual := avg(c.nums...)
+		if c.avg != actual {
+			t.Errorf("unexpected result: need %f got %f", c.avg, actual)
+		}
+	}
+}
+```
+The test functions are setup to compare results from the actual functions with known expected values.  Notice that test function `TestAvg()` uses an approach called `table-driven` test where multiple possibilities are tested in one function.
+
+The test framework builtin Go supports many more features including: 
+- HTTP testing
+- Code coverage
+- Test benchmark
+- Debugging / Profiling
 
 ## Standard library
+We only scratched the surface with this introduction to Go and its built-in packages.  The following lists additional packages that are part of the standard library:
 
-## Go tools
+- Regular expressions with search and replace
+- Full support for secure socket programming with TCP/UDP, IPv4, and IPv6
+- APIs for writing production-ready HTTP/HTTPS services and clients
+- Synchronization primitives (mutex, atomic, etc.)
+- General-purpose template framework with HTML support
+- Data serialization (JSON, XML, binary, etc)
+- Support for multiple RPC wire formats
+- Compression algorithms support: tar, zip/gzip, zlib, etc.
+- Cryptography support for most major algorithms and hash functions
+- Access to OS-level processes, environment info, and signaling
+- And much more
+
+## Conclusion
+This document is an attempt to cover helpful topics that a Go newcomer would need to know when getting started.  After going through the material here, the reader should be able to understand the fundamentals of the Go programming language and other critical idioms necessary to start creating Go programs.  However, this is by any stretch of the imagination complete.  After going through the material here, it is highly recommend that you grab a good book ([hopefully mine](https://www.packtpub.com/application-development/learning-go-programming)) to continue your journey into the Go programming language.
+
+Hope you enjoyed it!
