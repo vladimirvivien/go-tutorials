@@ -1,5 +1,5 @@
 # Getting Started With Go 
-This document is a collection of topics designed to help newcomers to get started with the Go proramming language.  All code samples, discussed in the sections below, can be found in this repository.
+This document is a collection of topics designed to help newcomers to get started with the Go programming language.  All code samples, discussed in the sections below, can be found in this repository.
 
 ## About Go
 Go was created as system language at Google in 2007 primarily by Robert Griesemer, Rob Pike, Ken Thomson.  The language was an answer to handle the needs of application development at Google-scale. The designers of Go wanted to mitigate issues such as slow build cycle, language complexity, magical syntax while creating a new language that is simple, safe, consistent, and predictable. 
@@ -653,7 +653,7 @@ func adjust(val *int) {
 
 ### The function type
 In Go, a function is also a type that can be assigned to a variable or stored for later use.  A function can be *named* or be assigned to a identifier as shown in the following example:
-```
+```go
 func main() {
 	printLn := func(val string) {
 		fmt.Println(len(val))
@@ -668,7 +668,7 @@ func run(f func(string)) {
 }
 ```
 In Go, a function can *return* a list of value of different types.  This idiom is often used as a way of handling errors from a function (or method) call.  For instance, the following function returns two values, one is the expected `int` value, and the other one is an `error` type used to signal any exceptional faults caused by the function call.
-```
+```go
 package main
 import (
 	"fmt"
@@ -694,7 +694,7 @@ func div(op0, op1 int) (int, error) {
 ```
 ### Methods 
 Methods are functions that are attached to a type.  Most Go types can receive a function via a special parameter, called a receiver parameter, that associate the function to the type.  The following example shows that type `*car` can receive method `drive()`:
-```
+```go
 type car struct {
 	make,
 	model string
@@ -1111,7 +1111,7 @@ func main() {
 }
 ```
 ### Using buffered IO for reading
-Go also supports buffered IO via the  `bytes` package. The package includes functions and types that make it easy to work with text content.  For instance, we can redo the previous program to read the content of `planets.txt` a line at a time delimited by  `\n` :
+Go also supports buffered IO via the  `bytes` package. The package includes functions and types that make it easy to work with text content.  For instance, we can redo the previous program to read the content of `planets.txt` a line at a time delimited by byte value  `'\n'` :
 ```go
 func main() {
 	file, err := os.Open("./planets.txt")
@@ -1212,6 +1212,7 @@ func main() {
 ```
 ## Data communications
 Go comes with a formidable set of functionalities for network communication using the `net` package.  We will only scratch the surface with a couple of examples to give you an idea what is possible with a few lines of code.
+
 ### A simple socket server 
 To get started, let us create a simple echo server and client.  The server is implemented with a few lines of code, but is capable of scaling to handle large number of connections using a goroutine as shown below:
 ```go
@@ -1374,7 +1375,9 @@ $ curl localhost:8080/time
 $ curl localhost:8080/date
 2017-08-02
 ```
-The previous program uses a default package-provided server object with default configurations.  The URL routes are handled with function `http.HandleFunc` which takes a path and the function used to handle HTTP request.  The program can be re-written using an explicit declaration of multiplexer path handler and a server object for deep configuration as shown below:
+The previous program uses a default package-provided server object with default configurations.  The URL routes are handled by a default packaged-provider handler using function `http.HandleFunc` which takes a path and the function used to handle HTTP request.  
+
+However, the program can be re-written using an explicit declarations of an `http.Server` value along with an `http.Handler` object used for route multiplexing called `http.ServeMux`.  This explicit declaration of these objects provides deeper control and configuration of the server as shown below:
 ```go
 func main() {
 	mux := http.NewServeMux()
@@ -1409,7 +1412,7 @@ func main() {
 }
 ```
 ### Writing HTTP clients
-The Go `http` package comes with everything you need to write robust HTTP client programs.  The following shows a simple client to the time api server above. 
+The Go `http` package comes with everything you need to write robust HTTP client programs.  The following shows a simple client, using default configurations, to the time api server above. 
 ```go
 func main() {
 	resp, err := http.Get("http://127.0.0.1:8080/now")
@@ -1423,7 +1426,7 @@ func main() {
 	}
 }
 ```
-The previous code uses a default client object provided by the `http` package.  If you want want deep configuration control, you can provide your own client object as is shown below:
+The previous code uses a default client object provided by the `http` package.  If you want want more control over client configuration, you can explicitly declare your own client object as is shown below:
 ```go
 func main() {
 	client := &http.Client{
@@ -1472,7 +1475,7 @@ func avg(nums ...float64) float64 {
 ```
 To test these functions, we simply need to do the followings:
 
-- create a file file that ends in `*_test.go`
+- create a Go source file with a name that ends in `*_test.go`
 - Next, in that test source file, create functions with name prefixes `TestXXX(t *testing.T)`
 
 The following source code, saved in file `math_test.go` shows the test function used to exercise the logic in the previous code:
