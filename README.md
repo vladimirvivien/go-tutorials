@@ -507,7 +507,7 @@ Composite types are used to store sequences of values of primitive types.  Compo
 
 #### *Array*
 Type *array* represents a fixed-size sequenced values numerically indexed.  
-```
+```go
 func main(){
     steps := [3]string{"SEND", "RCVD", "WAIT"} 	// size 3 array, initialized
     fmt.Println(steps[1]) 			// prints "RCVD" 
@@ -528,26 +528,32 @@ func main(){
 
 #### *Slice*
 A slice is a dynamically-sized array.  The slice omits its size as part of its type declaration as shown in the snippet below.   Slices can be initialized with a composite literal or with the `make()` built-in function:
-```
-steps := []string{"SEND", "RCVD", "WAIT"} 	// slice initialized with 3 elements
-fmt.Println(steps[1]) 						// prints "RCVD" 
-steps = append(steps, "PAUSE")				// slice expanded to size 4
-steps[3] = "RESUME"							// updates value at index 4
+```go
+func main() {
+	steps := []string{"SEND", "RCVD", "WAIT"} // slice with 3 elements
+	fmt.Println(steps[1])                     // prints "RCVD"
+	steps = append(steps, "PAUSE")            // slice expanded to size 4
+	steps[3] = "RESUME"                       // updates value at index 4
 
-actions := make([]int, 2)					// initializes a slice of size 2
-actions[0] = "PRINT"
-actions[1] = "LOG"
-actions = append(actions, "ADD")			// expands slice, size now 3
+	actions := make([]string, 2) // initializes a slice of size 2
+	actions[0] = "PRINT"
+	actions[1] = "LOG"
+	actions = append(actions, "ADD") // expands slice, size now 3
+}
+
 ```
 Go also supports slice expressions which can be used to create new slices from arrays or other slices.  For instance, slice `summer` is created by slicing existing array `months`
-```
-months := [12]string{
-    	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+```go
+func main() {
+	months := [12]string{
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	}
+	summer := months[5:8]
+	fmt.Println(summer)
 }
-summer := months[5:8]
 ```
-Similar to arrays, Go can use the `for-range` construct to iterate over slice items as shown in the following example:
+Similar to arrays, Go can use the `for-range` construct to iterate over slice elements as shown in the following example:
 ```go
 func main() {
 	months := [12]string{
@@ -567,16 +573,20 @@ Note that in this example, we assign the index value of the item to the blank id
 
 #### *Map*
 A map is a dynamically-sized composite type that stores elements of arbitrary types that are indexes using a values of  type.  A map can be initialized using a composite literal:
-```
-ratings := map[string][]int{
-	"men":   {32, 55, 12, 55, 42, 53},
-	"women": {44, 42, 23, 41, 65, 44},
-}
+```go
+func main() {
+	ratings := map[string][]int{
+		"men":   {32, 55, 12, 55, 42, 53},
+		"women": {44, 42, 23, 41, 65, 44},
+	}
 
-ratings["children"] = []int{2,34,5,43,64,22}
+	ratings["children"] = []int{2, 34, 5, 43, 64, 22}
+
+	fmt.Println(ratings)
+}
 ```
 A map can also be initialized using the built-in function `make()` as shown below:
-```
+```go
 hist := make(map[string]int)
 hist["Jan"] = 100
 hist["Feb"] = 445
@@ -597,7 +607,7 @@ func main() {
 ```
 #### *Struct*
 The *struct* type is a composite that stores named elements of diverse types known as fields.  The following example creates variable `truck` as type `struct{year int; make, model string}` and initializes it with a composite literal.
-```
+```go
 func main() {
 	truck := struct {
 		year        int
@@ -615,14 +625,19 @@ The struct uses the dot notation to access field members of the struct.
 
 ### The pointer type
 Go supports a type pointer which is a value that may be used to reference the memory address where the data is located. Go uses the `*` operator to designate a type as a pointer of that type.  The followings are examples of declaration of pointer type where `scorePtr` is a pointer to type `float32`:
-```
+```go
 var scorePtr *float32
 ```
 Pointer variables can only be assigned address values of its declared type.  One way to do so in Go is to use the address operator `&` (ampersand) to obtain the address of a variable as shown in the following example:
-```
-score := 32
-scorePtr = &score		// pointer assigned address
-*scorePtr = 44			// pointer dereferenced with value
+```go
+func main() {
+	score := 32
+	scorePtr := &score    // pointer assigned address
+	fmt.Println(scorePtr) // prints address
+	*scorePtr = 44        // pointer dereferenced with value
+	fmt.Println(score)    // prints updated score
+}
+
 ```
 While Go only support pass-by-value when calling a function/method, pointers can be used to create a pass-by-reference idiom.  For instance, in the following, variable `score` will not be updated after a call to function `adjust()` because the function receives a copy of the value via parameter `val`:
 ```go
