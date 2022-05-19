@@ -1,4 +1,4 @@
-package greetlib
+package hellolib
 
 var greetings = map[string]string{
 	"English": "Hello, World!",
@@ -13,10 +13,18 @@ var greetings = map[string]string{
 	"Turkish": "Merhaba Dünya",
 }
 
-// GreetIn returns a greeting in specified lang
-func GreetIn(lang string) string {
-	if greeting, ok := greetings[lang]; ok {
-		return greeting
+// Hello returns "Hello World" greeting in one or more in specified langs
+func Hello(langs ...string) []string {
+	if len(langs) == 0 {
+		return []string{greetings["English"]}
 	}
-	return greetings["English"]
+
+	var results []string
+	for _, lang := range langs {
+		if greeting, ok := greetings[lang]; ok {
+			results = append(results, greeting)
+		}
+	}
+
+	return results
 }
