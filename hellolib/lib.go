@@ -11,6 +11,7 @@ var greetings = map[string]string{
 	"Swahili": "Wapendwa Dunia",
 	"Spanish": "Hola Mundo",
 	"Turkish": "Merhaba Dünya",
+	"Kreyol": "Alo tout moun!"
 }
 
 // Hello returns "Hello World" greeting in one or more in specified langs
